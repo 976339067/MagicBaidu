@@ -28,18 +28,16 @@ class MagicBaidu():
 		content = self.search_page(query, start, pause)
 		soup = BeautifulSoup(content, "html.parser")
 		now = start + 1
-		for item in soup.find_all('div'):
-			if item.has_attr('id') and item['id'] == str(now):
-				now += 1
-				result = {}
-				result['title'] = item.h3.get_text()
-				result['url'] = item.h3.a['href']
-				ss = ''
-				for div in item.find_all('div'):
-					if div.has_attr('class') and (div['class'][0].find('abstract') != -1 or div['class'][0] == 'c-row'):
-						ss += div.get_text()
-				result['text'] = ss
-				yield result
+		for item in soup.find_all("div", class_="c-container"):
+			now += 1
+			result = {}
+			h3_node = item.h3;
+			if h3_node == None:
+				continue;
+			result['title'] = item.h3.get_text()
+			result['url'] = item.h3.a['href']
+			result['text'] = self.get_result_text(item);
+			yield result
 
 	def search_page(self, query, start=0, pause=2):
 		"""
@@ -87,6 +85,16 @@ class MagicBaidu():
 			if item.has_attr('id') and item['id'] == str(now):
 				now += 1
 				yield item.h3.a['href']
+
+	def get_result_text(self, soup_node):
+		content_nodes = soup_node.find_all(text=lambda text: text and 'content' in text.lower())
+		content_nodes = soup_node.find_all("span")
+
+		text_str = ""
+		for node in content_nodes:
+			text_str += node.get_text();
+
+		return text_str;
 
 	def pq_html(self, content):
 		"""
